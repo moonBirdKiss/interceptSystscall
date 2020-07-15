@@ -1,0 +1,1 @@
+cmd_/home/ubuntu18/Project/CPP/vscode/addSyscallByAddModule/src/syscall.mod := { echo  /home/ubuntu18/Project/CPP/vscode/addSyscallByAddModule/src/syscall.o; echo; } > /home/ubuntu18/Project/CPP/vscode/addSyscallByAddModule/src/syscall.mod
