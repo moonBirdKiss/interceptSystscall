@@ -6,19 +6,23 @@
 #include <linux/time.h>
 #include <asm/uaccess.h>
 #include <linux/sched.h>
+#include <linux/syscalls.h>
 
 #include <linux/kallsyms.h>
 
-#define __NR_syscall 335	/* 系统调用号335 */
+#define __NR_syscall_1 335	/* 系统调用号335 */
+#define __NR_syscall_2 336
 unsigned long * sys_call_table;
 
 unsigned int clear_and_return_cr0(void);
 void setback_cr0(unsigned int val);
-static int sys_mycall(void);
+static int sys_mycall_1(void);
+static int sys_mycall_2(void);
 
 int orig_cr0;	/* 用来存储cr0寄存器原来的值 */
 unsigned long *sys_call_table = 0;
-static int (*anything_saved)(void);	/*定义一个函数指针，用来保存一个系统调用*/
+static int (*anything_saved_1)(void);	/*定义一个函数指针，用来保存一个系统调用*/
+static int (*anything_saved_2)(void);
 /*
  * 设置cr0寄存器的第17位为0
  */
@@ -45,10 +49,20 @@ void setback_cr0(unsigned int val)
 }
 
 /* 添加自己的系统调用函数 */
-static int sys_mycall(void)
+static int sys_mycall_1(void)
 {
 	int ret = 12345;
 	printk("My syscall is successful!\n");
+	unsigned long * sys_call_table_1 = (unsigned long *)kallsyms_lookup_name("sys_call_table");
+	int (*sys_call_2_ptr)(void) = sys_call_table_1[__NR_syscall_2];
+	(*sys_call_2_ptr)();
+	return ret;
+}
+
+static int sys_mycall_2(void)
+{
+	int ret = 123456789;
+	printk("just try it");
 	return ret;
 }
 
@@ -58,9 +72,11 @@ static int __init init_addsyscall(void)
 	printk("My syscall is starting。。。\n");
 	sys_call_table = (unsigned long *)kallsyms_lookup_name("sys_call_table");	/* 获取系统调用服务首地址 */
    	printk("sys_call_table: 0x%p\n", sys_call_table);
-	anything_saved = (int(*)(void))(sys_call_table[__NR_syscall]);	/* 保存原始系统调用 */
+	anything_saved_1 = (int(*)(void))(sys_call_table[__NR_syscall_1]);	/* 保存原始系统调用 */
+	anything_saved_2 = (int(*)(void))(sys_call_table[__NR_syscall_2]);
 	orig_cr0 = clear_and_return_cr0();	/* 设置cr0可更改 */
-	sys_call_table[__NR_syscall] = (unsigned long)&sys_mycall;	/* 更改原始的系统调用服务地址 */
+	sys_call_table[__NR_syscall_1] = (unsigned long)&sys_mycall_1;	/* 更改原始的系统调用服务地址 */
+	sys_call_table[__NR_syscall_2] = (unsigned long)&sys_mycall_2;
 	setback_cr0(orig_cr0);	/* 设置为原始的只读cr0 */
 	return 0;
 }
@@ -69,7 +85,8 @@ static int __init init_addsyscall(void)
 static void __exit exit_addsyscall(void)
 {
  	orig_cr0 = clear_and_return_cr0();	/* 设置cr0中对sys_call_table的更改权限 */
-    	sys_call_table[__NR_syscall] = (unsigned long)anything_saved;	/* 设置cr0可更改 */
+    	sys_call_table[__NR_syscall_1] = (unsigned long)anything_saved_1;	/* 设置cr0可更改 */
+	sys_call_table[__NR_syscall_2] = (unsigned long)anything_saved_2;	/* 设置cr0可更改 */
     	setback_cr0(orig_cr0);	/* 恢复原有的中断向量表中的函数指针的值 */
    	printk("My syscall exit....\n");	/* 恢复原有的cr0的值 */
 }
@@ -77,4 +94,3 @@ static void __exit exit_addsyscall(void)
 module_init(init_addsyscall);
 module_exit(exit_addsyscall);
 MODULE_LICENSE("GPL");
-
