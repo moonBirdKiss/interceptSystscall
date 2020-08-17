@@ -1,2 +1,2 @@
-/home/ubuntu18/Project/CPP/vscode/replaceSyscallByAddModule/src/syscall.o
+/home/ubuntu18/Project/CPP/vscode/addSyscallByAddModule/src/syscall.o
 

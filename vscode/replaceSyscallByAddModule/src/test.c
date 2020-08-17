@@ -1,11 +1,10 @@
 #include <syscall.h>
 #include <stdio.h>
-#include<sys/socket.h> 
-#include<netinet/in.h>
+#include <sys/types.h>
+#include <linux/unistd.h>
 int main(void)
 {
-	int t_fd = socket(AF_INET, SOCK_STREAM, 0);
-	printf("that is the end\n, and the t_fd is %d", t_fd);
-	close(t_fd);
+	printf("%d\n",syscall(335));
+	printf("%d\n",syscall(336));
 	return 0;
 }
